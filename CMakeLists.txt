@@ -51,6 +51,7 @@ add_sources(TFMini/TFMini.cpp)
 include_directories(
         CisecoManager
         TFMini
+        LedManager
         .
         mbed-os
         mbed-os/cmsis
