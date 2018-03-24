@@ -1,0 +1,24 @@
+{
+  "name": "bbr18_mbed_firmware",
+  "version": "0.1.0",
+  "description": "",
+  "main": "gulpfile.js",
+  "dependencies": {
+    "drivelist": "^5.2.7",
+    "gulp": "^3.9.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ReikoR/bbr18-mbed-firmware.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ReikoR/bbr18-mbed-firmware/issues"
+  },
+  "homepage": "https://github.com/ReikoR/bbr18-mbed-firmware#readme"
+}
