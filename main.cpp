@@ -1,5 +1,6 @@
 #include "mbed.h"
 #include "EthernetInterface.h"
+#include "commands.h"
 #include "LedManager.h"
 
 #define PORT 8042
@@ -75,7 +76,19 @@ int main() {
 
             blinkState = !blinkState;
 
-            socket.sendto(PC_IP_ADDRESS, PORT, "Test", 4);
+            //socket.sendto(PC_IP_ADDRESS, PORT, "Test", 4);
+
+            Feedback feedback;
+            feedback.speed1 = 111;
+            feedback.speed2 = 231;
+            feedback.speed3 = 243;
+            feedback.speed4 = 344;
+            feedback.speed5 = 5443;
+            feedback.ball1 = 1;
+            feedback.ball2 = 0;
+            feedback.distance = 50;
+
+            socket.sendto(PC_IP_ADDRESS, PORT, &feedback, sizeof feedback);
 
             //int charCount = sprintf(ethSendBuffer, "Test");
             //socket.sendto(PC_IP_ADDRESS, PORT, ethSendBuffer, charCount);
