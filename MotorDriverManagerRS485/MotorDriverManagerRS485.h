@@ -36,6 +36,7 @@ private:
 
     void serialWrite(char *sendData, int length);
     char serialReadChar();
+    char isSerialReadable();
 
     int receiveCounter;
     char receiveBuffer[64];

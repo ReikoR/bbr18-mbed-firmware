@@ -2,6 +2,7 @@
 #include "EthernetInterface.h"
 #include "commands.h"
 #include "LedManager.h"
+#include "MotorDriverManagerRS485.h"
 
 #define PORT 8042
 #define MBED_IP_ADDRESS "192.168.4.1"
@@ -22,6 +23,7 @@ extern "C" void mbed_mac_address(char *s) {
     memcpy(s, mac, 6);
 }
 
+MotorDriverManagerRS485 motors(P2_0, P2_1);
 LedManager leds(P0_9);
 
 Ticker heartbeatTicker;
@@ -32,15 +34,46 @@ char ethSendBuffer[64];
 float heartBeatPeriod = 0.5;
 bool isHeartbeatUpdate = false;
 
+bool returnSpeeds = true;
+
 void heartbeatTick() {
     isHeartbeatUpdate = true;
 }
 
-void onUDPSocketData(void* buffer, int size) {
+void sendFeedback() {
+    int* speeds = motors.getSpeeds();
 
+    Feedback feedback;
+    feedback.speed1 = speeds[0];
+    feedback.speed2 = speeds[1];
+    feedback.speed3 = speeds[2];
+    feedback.speed4 = speeds[3];
+    feedback.speed5 = speeds[4];
+    feedback.ball1 = 1;
+    feedback.ball2 = 0;
+    feedback.distance = 50;
+
+    socket.sendto(PC_IP_ADDRESS, PORT, &feedback, sizeof feedback);
+}
+
+void onUDPSocketData(void* buffer, int size) {
+    if (sizeof(SpeedCommand) == size) {
+        SpeedCommand *command = static_cast<SpeedCommand *>(buffer);
+
+        motors.setSpeeds(command->speed1, command->speed2, command->speed3, command->speed4, command->speed5);
+    }
+}
+
+void handleSpeedsSent() {
+    if (returnSpeeds) {
+        sendFeedback();
+    }
 }
 
 int main() {
+    motors.baud(150000);
+    motors.attach(&handleSpeedsSent);
+
     leds.setLedColor(0, LedManager::OFF);
     leds.setLedColor(1, LedManager::OFF);
     leds.update();
@@ -63,6 +96,8 @@ int main() {
     leds.update();
 
     while (true) {
+        motors.update();
+
         if (isHeartbeatUpdate) {
             isHeartbeatUpdate = false;
 
@@ -75,23 +110,6 @@ int main() {
             leds.update();
 
             blinkState = !blinkState;
-
-            //socket.sendto(PC_IP_ADDRESS, PORT, "Test", 4);
-
-            Feedback feedback;
-            feedback.speed1 = 111;
-            feedback.speed2 = 231;
-            feedback.speed3 = 243;
-            feedback.speed4 = 344;
-            feedback.speed5 = 5443;
-            feedback.ball1 = 1;
-            feedback.ball2 = 0;
-            feedback.distance = 50;
-
-            socket.sendto(PC_IP_ADDRESS, PORT, &feedback, sizeof feedback);
-
-            //int charCount = sprintf(ethSendBuffer, "Test");
-            //socket.sendto(PC_IP_ADDRESS, PORT, ethSendBuffer, charCount);
         }
 
         nsapi_size_or_error_t size = socket.recvfrom(&address, recvBuffer, sizeof recvBuffer);

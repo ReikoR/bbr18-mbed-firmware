@@ -52,7 +52,8 @@ void MotorDriverManagerRS485::rxHandler(void) {
     // Interrupt does not work with RTOS when using standard functions (getc, putc)
     // https://developer.mbed.org/forum/bugs-suggestions/topic/4217/
 
-    while (serial.readable()) {
+    //while (serial.readable()) {
+    while (isSerialReadable()) {
         //char c = device.getc();
         char c = serialReadChar();
 
@@ -183,6 +184,18 @@ void MotorDriverManagerRS485::serialWrite(char *sendData, int length) {
 
 int *MotorDriverManagerRS485::getSpeeds() {
     return actualSpeeds;
+}
+
+char MotorDriverManagerRS485::isSerialReadable() {
+    if (serialId == 1) {
+        return LPC_UART1->LSR & 0x01;
+    }
+
+    if (serialId == 2) {
+        return LPC_UART2->LSR & 0x01;
+    }
+
+    return LPC_UART0->LSR & 0x01;
 }
 
 char MotorDriverManagerRS485::serialReadChar() {
