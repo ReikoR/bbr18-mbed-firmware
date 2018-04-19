@@ -26,6 +26,9 @@ extern "C" void mbed_mac_address(char *s) {
 MotorDriverManagerRS485 motors(P2_0, P2_1);
 LedManager leds(P0_9);
 
+DigitalIn ball1(P1_29);
+DigitalIn ball2(P2_4);
+
 Ticker heartbeatTicker;
 
 char recvBuffer[64];
@@ -36,6 +39,9 @@ bool isHeartbeatUpdate = false;
 
 bool returnSpeeds = true;
 
+int ball1State = 0;
+int ball2State = 0;
+
 void heartbeatTick() {
     isHeartbeatUpdate = true;
 }
@@ -43,14 +49,14 @@ void heartbeatTick() {
 void sendFeedback() {
     int* speeds = motors.getSpeeds();
 
-    Feedback feedback;
-    feedback.speed1 = speeds[0];
-    feedback.speed2 = speeds[1];
-    feedback.speed3 = speeds[2];
-    feedback.speed4 = speeds[3];
-    feedback.speed5 = speeds[4];
-    feedback.ball1 = 1;
-    feedback.ball2 = 0;
+    Feedback feedback{};
+    feedback.speed1 = static_cast<int16_t>(speeds[0]);
+    feedback.speed2 = static_cast<int16_t>(speeds[1]);
+    feedback.speed3 = static_cast<int16_t>(speeds[2]);
+    feedback.speed4 = static_cast<int16_t>(speeds[3]);
+    feedback.speed5 = static_cast<int16_t>(speeds[4]);
+    feedback.ball1 = static_cast<uint8_t>(ball1);
+    feedback.ball2 = static_cast<uint8_t>(ball2);
     feedback.distance = 50;
 
     socket.sendto(PC_IP_ADDRESS, PORT, &feedback, sizeof feedback);
@@ -121,6 +127,18 @@ int main() {
             //pc.printf("recv %d [%s] from %s:%d\n", size, recvBuffer, address.get_ip_address(), address.get_port());
 
             onUDPSocketData(recvBuffer, size);
+        }
+
+        int newBall1State = ball1;
+
+        if (ball1State != newBall1State) {
+            ball1State = newBall1State;
+        }
+
+        int newBall2State = ball2;
+
+        if (ball2State != newBall2State) {
+            ball2State = newBall2State;
         }
     }
 }
