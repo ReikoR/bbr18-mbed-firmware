@@ -36,10 +36,18 @@ Ticker heartbeatTicker;
 char recvBuffer[64];
 char ethSendBuffer[64];
 
-float heartBeatPeriod = 0.5;
+us_timestamp_t heartBeatPeriod_us = 1000;
 bool isHeartbeatUpdate = false;
+bool updateLeds = false;
 
 bool returnSpeeds = true;
+
+bool failSafeEnabled = true;
+int failSafeCountMotors = 0;
+int failSafeLimitMotors = 500;
+
+int ledCount = 1000;
+int ledCounter = 0;
 
 int ball1State = 0;
 int ball2State = 0;
@@ -48,6 +56,14 @@ uint8_t isSpeedChanged = 0;
 Timer runningTime;
 
 void heartbeatTick() {
+    isHeartbeatUpdate = true;
+
+    if (ledCounter++ > ledCount) {
+        ledCounter = 0;
+
+        updateLeds = true;
+    }
+
     isHeartbeatUpdate = true;
 }
 
@@ -73,6 +89,8 @@ void sendFeedback() {
 
 void onUDPSocketData(void* buffer, int size) {
     if (sizeof(SpeedCommand) == size) {
+        failSafeCountMotors = 0;
+
         SpeedCommand *command = static_cast<SpeedCommand *>(buffer);
 
         motors.setSpeeds(command->speed1, command->speed2, command->speed3, command->speed4, command->speed5);
@@ -104,7 +122,7 @@ int main() {
 
     SocketAddress address;
 
-    heartbeatTicker.attach(&heartbeatTick, heartBeatPeriod);
+    heartbeatTicker.attach_us(&heartbeatTick, heartBeatPeriod_us);
 
     bool blinkState = false;
 
@@ -118,17 +136,32 @@ int main() {
         motors.update();
 
         if (isHeartbeatUpdate) {
+            failSafeCountMotors++;
             isHeartbeatUpdate = false;
 
-            if (blinkState) {
-                leds.setLedColor(0, LedManager::BLUE);
-            } else {
-                leds.setLedColor(0, LedManager::YELLOW);
+            if (failSafeCountMotors == failSafeLimitMotors) {
+                failSafeCountMotors = 0;
+
+                if (failSafeEnabled) {
+                    returnSpeeds = false;
+                    motors.setSpeeds(0, 0, 0, 0, 0);
+                }
             }
 
-            leds.update();
+            if (updateLeds) {
+                updateLeds = false;
 
-            blinkState = !blinkState;
+                if (blinkState) {
+                    leds.setLedColor(0, LedManager::BLUE);
+                } else {
+                    leds.setLedColor(0, LedManager::YELLOW);
+                }
+
+                blinkState = !blinkState;
+
+                leds.update();
+            }
+
         }
 
         nsapi_size_or_error_t size = socket.recvfrom(&address, recvBuffer, sizeof recvBuffer);
