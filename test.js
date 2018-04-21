@@ -40,7 +40,9 @@ socket.on('message', (msg, rinfo) => {
         msg.readInt16LE(8),
         msg.readUInt8(10),
         msg.readUInt8(11),
-        msg.readUInt16LE(12)
+        msg.readUInt16LE(12),
+        msg.readUInt8(14),
+        msg.readInt32LE(15)
     );
 
     prevTime = currentTime;

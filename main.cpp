@@ -45,6 +45,8 @@ int ball1State = 0;
 int ball2State = 0;
 
 uint8_t isSpeedChanged = 0;
+Timer runningTime;
+
 void heartbeatTick() {
     isHeartbeatUpdate = true;
 }
@@ -62,6 +64,8 @@ void sendFeedback() {
     feedback.ball2 = static_cast<uint8_t>(ball2);
     feedback.distance = tfMini.read()->distance;
     feedback.isSpeedChanged = isSpeedChanged;
+    feedback.time = runningTime.read_us();
+
     isSpeedChanged = 0;
 
     socket.sendto(PC_IP_ADDRESS, PORT, &feedback, sizeof feedback);
@@ -107,6 +111,8 @@ int main() {
     leds.setLedColor(0, LedManager::GREEN);
     leds.setLedColor(1, LedManager::GREEN);
     leds.update();
+
+    runningTime.start();
 
     while (true) {
         motors.update();

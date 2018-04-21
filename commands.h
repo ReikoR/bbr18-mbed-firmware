@@ -19,6 +19,7 @@ struct __attribute__((packed)) Feedback {
     uint8_t ball2;
     uint16_t distance;
     uint8_t isSpeedChanged;
+    int time;
 };
 
 #endif //BBR18_MBED_FIRMWARE_COMMANDS_H
