@@ -186,16 +186,16 @@ int *MotorDriverManagerRS485::getSpeeds() {
     return actualSpeeds;
 }
 
-char MotorDriverManagerRS485::isSerialReadable() {
+bool MotorDriverManagerRS485::isSerialReadable() {
     if (serialId == 1) {
-        return LPC_UART1->LSR & 0x01;
+        return LPC_UART1->LSR & (uint8_t)0x01;
     }
 
     if (serialId == 2) {
-        return LPC_UART2->LSR & 0x01;
+        return LPC_UART2->LSR & (uint8_t)0x01;
     }
 
-    return LPC_UART0->LSR & 0x01;
+    return LPC_UART0->LSR & (uint8_t)0x01;
 }
 
 char MotorDriverManagerRS485::serialReadChar() {
