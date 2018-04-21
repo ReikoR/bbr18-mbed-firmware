@@ -90,6 +90,7 @@ void sendFeedback() {
 void onUDPSocketData(void* buffer, int size) {
     if (sizeof(SpeedCommand) == size) {
         failSafeCountMotors = 0;
+        returnSpeeds = true;
 
         SpeedCommand *command = static_cast<SpeedCommand *>(buffer);
 
