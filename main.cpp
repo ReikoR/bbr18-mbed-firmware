@@ -137,15 +137,22 @@ int main() {
         }
 
         int newBall1State = ball1;
+        bool isBallStateChanged = false;
 
         if (ball1State != newBall1State) {
             ball1State = newBall1State;
+            isBallStateChanged = true;
         }
 
         int newBall2State = ball2;
 
         if (ball2State != newBall2State) {
             ball2State = newBall2State;
+            isBallStateChanged = true;
+        }
+
+        if (isBallStateChanged) {
+            sendFeedback();
         }
     }
 }
