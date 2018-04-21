@@ -44,6 +44,7 @@ bool returnSpeeds = true;
 int ball1State = 0;
 int ball2State = 0;
 
+uint8_t isSpeedChanged = 0;
 void heartbeatTick() {
     isHeartbeatUpdate = true;
 }
@@ -60,6 +61,8 @@ void sendFeedback() {
     feedback.ball1 = static_cast<uint8_t>(ball1);
     feedback.ball2 = static_cast<uint8_t>(ball2);
     feedback.distance = tfMini.read()->distance;
+    feedback.isSpeedChanged = isSpeedChanged;
+    isSpeedChanged = 0;
 
     socket.sendto(PC_IP_ADDRESS, PORT, &feedback, sizeof feedback);
 }
@@ -74,6 +77,7 @@ void onUDPSocketData(void* buffer, int size) {
 
 void handleSpeedsSent() {
     if (returnSpeeds) {
+        isSpeedChanged = 1;
         sendFeedback();
     }
 }
