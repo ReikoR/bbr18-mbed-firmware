@@ -10,9 +10,16 @@ protected:
 public:
     TFMini(PinName txPinName, PinName rxPinName);
 
+    struct Frame {
+        uint16_t distance;
+        uint16_t strength;
+        uint8_t signalQuality;
+        uint8_t checkSum;
+    };
+
     void baud(int baudrate);
 
-    char *read();
+    Frame *read();
 
     bool readable();
 
@@ -28,7 +35,11 @@ public:
 private:
     Serial serial;
 
+    Frame frame;
+
     int serialId;
+
+    bool isSerialReadable();
 
     void rxHandler(void);
 
@@ -37,9 +48,9 @@ private:
     char serialReadChar();
 
     unsigned int receiveCounter;
-    char receiveBuffer[16];
+    uint8_t receiveBuffer[16];
 
-    char receivedMessage[16];
+    uint8_t receivedMessage[16];
 
     int commandLength;
 };

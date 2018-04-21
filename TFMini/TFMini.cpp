@@ -27,7 +27,8 @@ void TFMini::rxHandler(void) {
     // Interrupt does not work with RTOS when using standard functions (getc, putc)
     // https://developer.mbed.org/forum/bugs-suggestions/topic/4217/
 
-    while (serial.readable()) {
+    //while (serial.readable()) {
+    while (isSerialReadable()) {
         char c = serialReadChar();
 
         if (receiveCounter < commandLength) {
@@ -51,6 +52,11 @@ void TFMini::rxHandler(void) {
                     receivedMessage[i] = receiveBuffer[i];
                 }
 
+                frame.distance = (uint16_t)receivedMessage[3] << 8 | (uint16_t)receivedMessage[2];
+                frame.strength = (uint16_t)receivedMessage[5] << 8 | (uint16_t)receivedMessage[4];
+                frame.signalQuality = receivedMessage[7];
+                frame.checkSum = receivedMessage[8];
+
                 messageAvailable = true;
             }
         }
@@ -61,9 +67,21 @@ bool TFMini::readable() {
     return messageAvailable;
 }
 
-char *TFMini::read() {
+bool TFMini::isSerialReadable() {
+    if (serialId == 1) {
+        return LPC_UART1->LSR & (uint8_t)0x01;
+    }
+
+    if (serialId == 2) {
+        return LPC_UART2->LSR & (uint8_t)0x01;
+    }
+
+    return LPC_UART0->LSR & (uint8_t)0x01;
+}
+
+TFMini::Frame *TFMini::read() {
     messageAvailable = false;
-    return receivedMessage;
+    return &frame;
 }
 
 char TFMini::serialReadChar() {

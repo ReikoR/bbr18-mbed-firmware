@@ -3,6 +3,7 @@
 #include "commands.h"
 #include "LedManager.h"
 #include "MotorDriverManagerRS485.h"
+#include "TFMini.h"
 
 #define PORT 8042
 #define MBED_IP_ADDRESS "192.168.4.1"
@@ -24,6 +25,7 @@ extern "C" void mbed_mac_address(char *s) {
 }
 
 MotorDriverManagerRS485 motors(P2_0, P2_1);
+TFMini tfMini(P0_10, P0_11);
 LedManager leds(P0_9);
 
 DigitalIn ball1(P1_29);
@@ -57,7 +59,7 @@ void sendFeedback() {
     feedback.speed5 = static_cast<int16_t>(speeds[4]);
     feedback.ball1 = static_cast<uint8_t>(ball1);
     feedback.ball2 = static_cast<uint8_t>(ball2);
-    feedback.distance = 50;
+    feedback.distance = tfMini.read()->distance;
 
     socket.sendto(PC_IP_ADDRESS, PORT, &feedback, sizeof feedback);
 }
@@ -80,6 +82,7 @@ int main() {
     motors.baud(150000);
     motors.attach(&handleSpeedsSent);
 
+    tfMini.baud(115200);
     leds.setLedColor(0, LedManager::OFF);
     leds.setLedColor(1, LedManager::OFF);
     leds.update();
