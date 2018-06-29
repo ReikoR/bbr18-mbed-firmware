@@ -18,11 +18,11 @@ MotorDriverManagerRS485::MotorDriverManagerRS485(PinName txPinName, PinName rxPi
     actualSpeeds[3] = 0;
     actualSpeeds[4] = 0;
 
-    deviceIds[0] = '1';
-    deviceIds[1] = '2';
-    deviceIds[2] = '3';
-    deviceIds[3] = '4';
-    deviceIds[4] = '5';
+    deviceIds[0] = 1;
+    deviceIds[1] = 2;
+    deviceIds[2] = 3;
+    deviceIds[3] = 4;
+    deviceIds[4] = 5;
 
     activeSpeedIndex = 0;
     isSettingSpeeds = false;
