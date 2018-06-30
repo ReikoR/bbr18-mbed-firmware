@@ -18,11 +18,11 @@ MotorDriverManagerRS485::MotorDriverManagerRS485(PinName txPinName, PinName rxPi
     actualSpeeds[3] = 0;
     actualSpeeds[4] = 0;
 
-    deviceIds[0] = 1;
-    deviceIds[1] = 2;
-    deviceIds[2] = 3;
-    deviceIds[3] = 4;
-    deviceIds[4] = 5;
+    deviceIds[0] = 0;
+    deviceIds[1] = 1;
+    deviceIds[2] = 2;
+    deviceIds[3] = 3;
+    deviceIds[4] = 4;
 
     activeSpeedIndex = 0;
     isSettingSpeeds = false;
@@ -68,7 +68,7 @@ void MotorDriverManagerRS485::rxHandler(void) {
                     }
                     break;
                 case 1:
-                    if (c == '1' || c == '2' || c == '3' || c == '4' || c == '5') {
+                    if (c >= 0 && c <= 4) {
                         receiveBuffer[receiveCounter] = c;
                         receiveCounter++;
                     } else {
