@@ -1,7 +1,6 @@
 #include "mbed.h"
 #include "EthernetInterface.h"
 #include "commands.h"
-#include "LedManager.h"
 #include "MotorDriverManagerRS485.h"
 #include "TFMini.h"
 
@@ -24,14 +23,19 @@ extern "C" void mbed_mac_address(char *s) {
     memcpy(s, mac, 6);
 }
 
-MotorDriverManagerRS485 motors(P2_0, P2_1);
-TFMini tfMini(P0_10, P0_11);
-LedManager leds(P0_9);
 
-DigitalIn ball1(P1_29);
-DigitalIn ball2(P2_4);
+
+MotorDriverManagerRS485 motors(P2_0, P2_1);
+TFMini tfMini(P0_0, P0_1);
+
+DigitalIn ball1(P2_12);
+DigitalIn ball2(P2_13);
 
 Ticker heartbeatTicker;
+
+DigitalOut led1(P0_18);
+DigitalOut led2(P0_19);
+DigitalOut led3(P0_20);
 
 char recvBuffer[64];
 char ethSendBuffer[64];
@@ -110,9 +114,9 @@ int main() {
     motors.attach(&handleSpeedsSent);
 
     tfMini.baud(115200);
-    leds.setLedColor(0, LedManager::OFF);
-    leds.setLedColor(1, LedManager::OFF);
-    leds.update();
+    led1 = 0;
+    led2 = 0;
+    led3 = 1;
 
     eth.set_network(MBED_IP_ADDRESS, "255.255.255.0", PC_IP_ADDRESS);
     eth.connect();
@@ -127,9 +131,8 @@ int main() {
 
     bool blinkState = false;
 
-    leds.setLedColor(0, LedManager::GREEN);
-    leds.setLedColor(1, LedManager::GREEN);
-    leds.update();
+    led2 = 1;
+    led3 = 0;
 
     runningTime.start();
 
@@ -153,14 +156,13 @@ int main() {
                 updateLeds = false;
 
                 if (blinkState) {
-                    leds.setLedColor(0, LedManager::BLUE);
+                    led1 = 1;
+                    sendFeedback();
                 } else {
-                    leds.setLedColor(0, LedManager::YELLOW);
+                    led1 = 0;
                 }
 
                 blinkState = !blinkState;
-
-                leds.update();
             }
 
         }
