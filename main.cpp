@@ -169,9 +169,7 @@ int main() {
 
         nsapi_size_or_error_t size = socket.recvfrom(&address, recvBuffer, sizeof recvBuffer);
 
-        if (size < 0 && size != NSAPI_ERROR_WOULD_BLOCK) {
-            //pc.printf("recvfrom failed with error code %d\n", size);
-        } else if (size > 0) {
+        if (size > 0) {
             recvBuffer[size] = '\0';
             //pc.printf("recv %d [%s] from %s:%d\n", size, recvBuffer, address.get_ip_address(), address.get_port());
 
