@@ -176,6 +176,7 @@ void MotorDriverManagerRS485::serialWrite(char *sendData, int length) {
         if (serial.writeable()) {
             serial.putc(sendData[i]);
             i++;
+            wait_us(40); //Motor driver rx handler is not fast enough
         }
     }
 }

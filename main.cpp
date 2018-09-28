@@ -110,7 +110,7 @@ void handleSpeedsSent() {
 }
 
 int main() {
-    motors.baud(150000);
+    motors.baud(1500000);
     motors.attach(&handleSpeedsSent);
 
     tfMini.baud(115200);
