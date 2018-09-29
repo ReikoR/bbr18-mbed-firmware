@@ -12,6 +12,8 @@ TFMini::TFMini(PinName txPinName, PinName rxPinName):
         serialId = 1;
     } else if (rxPinName == P0_11) {
         serialId = 2;
+    } else if (rxPinName == P0_1) {
+        serialId = 3;
     } else {
         serialId = 0;
     }
@@ -76,6 +78,10 @@ bool TFMini::isSerialReadable() {
         return LPC_UART2->LSR & (uint8_t)0x01;
     }
 
+    if (serialId == 3) {
+        return LPC_UART3->LSR & (uint8_t)0x01;
+    }
+
     return LPC_UART0->LSR & (uint8_t)0x01;
 }
 
@@ -91,6 +97,10 @@ char TFMini::serialReadChar() {
 
     if (serialId == 2) {
         return LPC_UART2->RBR;
+    }
+
+    if (serialId == 3) {
+        return LPC_UART3->RBR;
     }
 
     return LPC_UART0->RBR;
