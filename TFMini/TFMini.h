@@ -13,7 +13,7 @@ public:
     struct Frame {
         uint16_t distance;
         uint16_t strength;
-        uint8_t signalQuality;
+        uint8_t distanceMode;
         uint8_t checkSum;
     };
 

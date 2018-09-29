@@ -56,7 +56,7 @@ void TFMini::rxHandler(void) {
 
                 frame.distance = (uint16_t)receivedMessage[3] << 8 | (uint16_t)receivedMessage[2];
                 frame.strength = (uint16_t)receivedMessage[5] << 8 | (uint16_t)receivedMessage[4];
-                frame.signalQuality = receivedMessage[7];
+                frame.distanceMode = receivedMessage[6];
                 frame.checkSum = receivedMessage[8];
 
                 messageAvailable = true;
