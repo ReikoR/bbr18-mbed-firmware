@@ -28,7 +28,7 @@ public:
     }
 
 private:
-    RawSerial serial;
+    Serial serial;
 
     int serialId;
 
