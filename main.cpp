@@ -137,7 +137,9 @@ int main() {
     runningTime.start();
 
     while (true) {
+        led2 = 1;
         motors.update();
+        led2 = 0;
 
         if (isHeartbeatUpdate) {
             failSafeCountMotors++;
