@@ -1,12 +1,15 @@
 #ifndef BBR18_MBED_FIRMWARE_COMMANDS_H
 #define BBR18_MBED_FIRMWARE_COMMANDS_H
 
-struct SpeedCommand {
+struct __attribute__((packed)) RobotCommand {
     int16_t speed1;
     int16_t speed2;
     int16_t speed3;
     int16_t speed4;
     int16_t speed5;
+    char fieldID;
+    char robotID;
+    uint8_t shouldSendAck;
 };
 
 struct __attribute__((packed)) Feedback {
@@ -19,6 +22,7 @@ struct __attribute__((packed)) Feedback {
     uint8_t ball2;
     uint16_t distance;
     uint8_t isSpeedChanged;
+    char refereeCommand;
     int time;
 };
 

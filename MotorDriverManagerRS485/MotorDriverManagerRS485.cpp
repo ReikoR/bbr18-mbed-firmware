@@ -37,6 +37,8 @@ MotorDriverManagerRS485::MotorDriverManagerRS485(PinName txPinName, PinName rxPi
         serialId = 1;
     } else if (rxPinName == P0_11) {
         serialId = 2;
+    } else if (rxPinName == P0_1) {
+        serialId = 3;
     } else {
         serialId = 0;
     }
@@ -193,6 +195,10 @@ bool MotorDriverManagerRS485::isSerialReadable() {
 
     if (serialId == 2) {
         return LPC_UART2->LSR & (uint8_t)0x01;
+    }
+
+    if (serialId == 3) {
+        return LPC_UART3->LSR & (uint8_t)0x01;
     }
 
     return LPC_UART0->LSR & (uint8_t)0x01;
