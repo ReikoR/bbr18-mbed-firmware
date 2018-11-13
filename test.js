@@ -13,13 +13,16 @@ var minSpeeds = [-100, -100, -100, -100, -1000];
 var speedsSteps = [1, 2, 3, 4, 5];
 var speedDirectionsUp = [true, true, true, true, true];
 var feedback = {};
-const commandBuffer = Buffer.alloc(13);
+const commandBuffer = Buffer.alloc(14);
 const commandObject =  {
     speeds: [0, 0, 0, 0, 0],
     fieldID: 'A',
     robotID: 'B',
     shouldSendAck: false,
+    led: 2
 };
+
+let lastButton = 0;
 
 /*
 int16_t speed1;
@@ -30,6 +33,7 @@ int16_t speed5;
 char fieldID;
 char robotID;
 uint8_t shouldSendAck;
+uint8_t led;
  */
 
 function updateCommandBuffer() {
@@ -42,6 +46,7 @@ function updateCommandBuffer() {
     commandBuffer.writeUInt8(commandObject.fieldID.charCodeAt(0), 10);
     commandBuffer.writeUInt8(commandObject.robotID.charCodeAt(0), 11);
     commandBuffer.writeUInt8(commandObject.shouldSendAck ? 1 : 0, 12);
+    commandBuffer.writeUInt8(commandObject.led, 13);
 
     commandObject.shouldSendAck = false;
 }
@@ -76,6 +81,7 @@ socket.on('message', (msg, rinfo) => {
     uint16_t distance;
     uint8_t isSpeedChanged;
     char refereeCommand;
+    uint8_t button;
     int time;*/
 
     feedback = {
@@ -89,12 +95,28 @@ socket.on('message', (msg, rinfo) => {
         distance: msg.readUInt16LE(12),
         isSpeedChanged: msg.readUInt8(14),
         refereeCommand: String.fromCharCode(msg.readUInt8(15)),
-        time: msg.readInt32LE(16),
+        button: msg.readUInt8(16),
+        time: msg.readInt32LE(17),
     };
 
     if (feedback.refereeCommand === 'P') {
         commandObject.shouldSendAck = true;
     }
+
+    if (lastButton === 0 && feedback.button === 1) {
+        switch (commandObject.led) {
+            case 0:
+                commandObject.led = 1;
+                break;
+            case 1:
+                commandObject.led = 0;
+                break;
+            default:
+                commandObject.led = 1;
+        }
+    }
+
+    lastButton = feedback.button;
 
     console.log(('0' + (currentTime - prevTime)).slice(-2), feedback);
 
@@ -130,13 +152,13 @@ socket.on('listening', () => {
         speeds[4] = 0;
 
         updateCommandBuffer();
-        console.log(commandObject);
-        console.log(commandBuffer);
+        //console.log(commandObject);
+        //console.log(commandBuffer);
         socket.send(commandBuffer, 0, commandBuffer.length, mbedPort, mbedAddress);
 
         //pipeMotorSpeed = Math.sin(value) * 1000;
         //value += 0.005;
-    }, 1000);
+    }, 50);
 });
 
 socket.bind(8042);

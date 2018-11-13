@@ -10,6 +10,7 @@ struct __attribute__((packed)) RobotCommand {
     char fieldID;
     char robotID;
     uint8_t shouldSendAck;
+    uint8_t led;
 };
 
 struct __attribute__((packed)) Feedback {
@@ -23,6 +24,7 @@ struct __attribute__((packed)) Feedback {
     uint16_t distance;
     uint8_t isSpeedChanged;
     char refereeCommand;
+    uint8_t button;
     int time;
 };
 

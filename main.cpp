@@ -34,11 +34,13 @@ RFManager xbee(P0_10, P0_11);
 DigitalIn ball1(P2_12);
 DigitalIn ball2(P2_13);
 
+DigitalIn button(P1_29);
+
 Ticker heartbeatTicker;
 
-DigitalOut led1(P0_18);
-DigitalOut led2(P0_19);
-DigitalOut led3(P0_20);
+DigitalOut ledBasket(P0_18);
+DigitalOut ledButton(P0_19);
+DigitalOut ledHeartbeat(P0_20);
 
 char recvBuffer[64];
 char ethSendBuffer[64];
@@ -53,11 +55,37 @@ bool failSafeEnabled = true;
 int failSafeCountMotors = 0;
 int failSafeLimitMotors = 500;
 
-int ledCount = 1000;
+int ledCount = 500;
 int ledCounter = 0;
+
+enum ButtonState {
+    buttonOff, buttonDown, buttonActive
+};
+
+enum ButtonResult {
+    buttonIdle = 0,
+    buttonPressed = 1,
+    buttonPressedLong = 2
+};
+
+int buttonState = buttonOff;
+int currentButton = button;
+int buttonDebounceCount = 50;
+int buttonDebounceCounter = buttonDebounceCount + 1;
+int buttonActiveCount = 2000;
+int buttonActiveCounter = 0;
+ButtonResult buttonResult = buttonIdle;
 
 int ball1State = 0;
 int ball2State = 0;
+
+enum LedBasketState {
+    basketMagenta = 0,
+    basketBlue = 1,
+    basketUnknown = 2
+};
+
+LedBasketState currentLedBasketState = basketUnknown;
 
 uint8_t isSpeedChanged = 0;
 Timer runningTime;
@@ -93,6 +121,7 @@ void sendFeedback() {
     feedback.distance = tfMini.read()->distance;
     feedback.isSpeedChanged = isSpeedChanged;
     feedback.refereeCommand = lastParsedRefereeCommand[2];
+    feedback.button = buttonResult;
     feedback.time = runningTime.read_us();
 
     isSpeedChanged = 0;
@@ -147,6 +176,18 @@ void onUDPSocketData(void* buffer, int size) {
 
         shouldSendAck = command->shouldSendAck == 1;
 
+        switch (command->led) {
+            case 0:
+                currentLedBasketState = basketMagenta;
+                break;
+            case 1:
+                currentLedBasketState = basketBlue;
+                break;
+            case 2:
+                currentLedBasketState = basketUnknown;
+                break;
+        }
+
         motors.setSpeeds(command->speed1, command->speed2, command->speed3, command->speed4, command->speed5);
     }
 }
@@ -167,9 +208,9 @@ int main() {
     xbee.baud(9600);
 
     tfMini.baud(115200);
-    led1 = 0;
-    led2 = 0;
-    led3 = 1;
+    ledBasket = 0;
+    ledButton = 0;
+    ledHeartbeat = 1;
 
     eth.set_network(MBED_IP_ADDRESS, "255.255.255.0", PC_IP_ADDRESS);
     eth.connect();
@@ -183,16 +224,14 @@ int main() {
     heartbeatTicker.attach_us(&heartbeatTick, heartBeatPeriod_us);
 
     bool blinkState = false;
+    bool shouldSendFeedback = true;
 
-    led2 = 1;
-    led3 = 0;
+    ledHeartbeat = 0;
 
     runningTime.start();
 
     while (true) {
-        led2 = 1;
         motors.update();
-        led2 = 0;
 
         if (isHeartbeatUpdate) {
             failSafeCountMotors++;
@@ -207,17 +246,78 @@ int main() {
                 }
             }
 
+            if (buttonDebounceCounter < buttonDebounceCount) {
+                buttonDebounceCounter++;
+            } else if (buttonDebounceCounter == buttonDebounceCount) {
+                buttonDebounceCounter++;
+
+                if (currentButton) {
+                    if (buttonState == buttonDown) {
+                        buttonResult = buttonPressed;
+                        shouldSendFeedback = true;
+                    } else if (buttonState == buttonActive) {
+                        buttonResult = buttonPressedLong;
+                        shouldSendFeedback = true;
+                    }
+
+                    buttonState = buttonOff;
+                    ledButton = 0;
+
+                } else  {
+                    if (buttonState == buttonOff) {
+                        buttonState = buttonDown;
+                    }
+                }
+            }
+
+            if (currentLedBasketState == basketMagenta) {
+                ledBasket = 0;
+            } else if (currentLedBasketState == basketBlue) {
+                ledBasket = 1;
+            }
+
+            if (buttonState == buttonDown) {
+                buttonActiveCounter++;
+
+                ledButton = 1;
+
+                if (buttonActiveCounter >= buttonActiveCount) {
+                    buttonState = buttonActive;
+                }
+            } else if (buttonState != buttonActive) {
+                ledButton = 0;
+            }
+
+            if (buttonState != buttonDown) {
+                buttonActiveCounter = 0;
+            }
+
             if (updateLeds) {
                 updateLeds = false;
 
                 if (blinkState) {
-                    led1 = 1;
-                    sendFeedback();
+                    ledHeartbeat = 1;
+
+                    ledButton = 0;
+
+                    shouldSendFeedback = true;
                 } else {
-                    led1 = 0;
+                    ledHeartbeat = 0;
+
+                    if (buttonState == buttonActive) {
+                        ledButton = 1;
+                    }
                 }
 
                 blinkState = !blinkState;
+
+                if (currentLedBasketState == basketUnknown) {
+                    if (blinkState) {
+                        ledBasket = 0;
+                    } else {
+                        ledBasket = 1;
+                    }
+                }
             }
 
         }
@@ -242,18 +342,17 @@ int main() {
         }
 
         int newBall1State = ball1;
-        bool hasBallStateChanged = false;
 
         if (ball1State != newBall1State) {
             ball1State = newBall1State;
-            hasBallStateChanged = true;
+            shouldSendFeedback = true;
         }
 
         int newBall2State = ball2;
 
         if (ball2State != newBall2State) {
             ball2State = newBall2State;
-            hasBallStateChanged = true;
+            shouldSendFeedback = true;
         }
 
         if (shouldSendAck) {
@@ -263,13 +362,24 @@ int main() {
             xbee.send(refereeAckCommand);
         }
 
-        if (hasBallStateChanged || hasRefereeCommandChanged) {
+        int newButton = button;
+
+        if (currentButton != newButton) {
+            buttonDebounceCounter = 0;
+            currentButton = newButton;
+        }
+
+        if (shouldSendFeedback || hasRefereeCommandChanged) {
+            shouldSendFeedback = false;
+
             sendFeedback();
 
             if (hasRefereeCommandChanged) {
                 hasRefereeCommandChanged = false;
                 lastParsedRefereeCommand[2] = 'X';
             }
+
+            buttonResult = buttonIdle;
         }
     }
 }
