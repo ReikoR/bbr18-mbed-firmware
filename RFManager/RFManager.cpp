@@ -43,8 +43,8 @@ void RFManager::rxHandler(void) {
                     receiveBuffer[receiveCounter] = c;
                     receiveCounter++;
                 }
-            } else if (c == 'a' && !shortCommandsEnabled
-                       || c == 'a' && shortCommandsEnabled && (receiveCounter < commandLength - 1)
+            } else if ((c == 'a' && !shortCommandsEnabled)
+                       || (c == 'a' && shortCommandsEnabled && (receiveCounter < commandLength - 1))
                     ) {
                 // If a is received in the middle, assume some bytes got lost before and start from beginning
                 receiveCounter = 0;
@@ -56,7 +56,7 @@ void RFManager::rxHandler(void) {
                 receiveCounter++;
             }
 
-            if (receiveCounter == commandLength || c == '-') {
+            if (receiveCounter == commandLength || (receiveCounter > 3 && c == '-')) {
                 for (unsigned int i = 0; i < receiveCounter; i++) {
                     buf.queue(receiveBuffer[i]);
                 }
@@ -95,7 +95,7 @@ void RFManager::update() {
         _callback.call();
     }*/
 
-    if (buf.available() >= commandLength) {
+    if (buf.available() > 0) {
         handleMessage(commandLength);
     }
 }
@@ -105,11 +105,18 @@ void RFManager::handleMessage(unsigned int length) {
         return;
     }
 
-    for (unsigned int i = 0; i < length; i++) {
+    unsigned int i = 0;
+
+    //read bytes up to message length or first '-'
+    for (i = 0; i < length; i++) {
         buf.dequeue(receivedMessage + i);
+
+        if (receivedMessage[i] == '-') {
+            break;
+        }
     }
 
-    receivedMessage[length] = '\0';
+    receivedMessage[i] = '\0';
 
     messageAvailable = true;
 }
