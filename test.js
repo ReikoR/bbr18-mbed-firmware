@@ -8,9 +8,9 @@ var currentTime = Date.now();
 var prevTime = currentTime;
 
 //var speeds = [0, 0, 0, 0, 0];
-var maxSpeeds = [100, 100, 100, 100, 1000];
-var minSpeeds = [-100, -100, -100, -100, -1000];
-var speedsSteps = [1, 2, 3, 4, 5];
+var maxSpeeds = [1000, 1000, 1000, 1000, 16000];
+var minSpeeds = [-1000, -1000, -100, -1000, -16000];
+var speedsSteps = [10, 10, 10, 10, 50];
 var speedDirectionsUp = [true, true, true, true, true];
 var feedback = {};
 const commandBuffer = Buffer.alloc(14);
@@ -101,6 +101,10 @@ socket.on('message', (msg, rinfo) => {
 
     if (feedback.refereeCommand === 'P') {
         commandObject.shouldSendAck = true;
+    } else if (feedback.refereeCommand === 'S') {
+
+    } else if (feedback.refereeCommand === 'T') {
+
     }
 
     if (lastButton === 0 && feedback.button === 1) {
@@ -118,7 +122,8 @@ socket.on('message', (msg, rinfo) => {
 
     lastButton = feedback.button;
 
-    console.log(('0' + (currentTime - prevTime)).slice(-2), feedback);
+    //console.log(('0' + (currentTime - prevTime)).slice(-2), feedback);
+    console.log(('000' + (currentTime - prevTime)).slice(-4), feedback.time, feedback.refereeCommand);
 
     prevTime = currentTime;
 });
@@ -132,12 +137,12 @@ socket.on('listening', () => {
 
     setInterval(function () {
         for (let i = 0; i < speeds.length; i++) {
-            let newSpeed = speeds[i] + (speedDirectionsUp[i] ? speedsSteps[i] : - speedsSteps[i])
+            let newSpeed = speeds[i] + (speedDirectionsUp[i] ? speedsSteps[i] : -speedsSteps[i]);
 
             if (speedDirectionsUp[i] && newSpeed > maxSpeeds[i]) {
                 newSpeed = maxSpeeds[i];
                 speedDirectionsUp[i] = false;
-            } else if (!speedDirectionsUp[i] && newSpeed < maxSpeeds[i]) {
+            } else if (!speedDirectionsUp[i] && newSpeed < minSpeeds[i]) {
                 newSpeed = minSpeeds[i];
                 speedDirectionsUp[i] = true;
             }
@@ -158,7 +163,7 @@ socket.on('listening', () => {
 
         //pipeMotorSpeed = Math.sin(value) * 1000;
         //value += 0.005;
-    }, 50);
+    }, 500);
 });
 
 socket.bind(8042);
