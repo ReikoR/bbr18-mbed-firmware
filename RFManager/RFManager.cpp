@@ -2,7 +2,7 @@
 #include "RFManager.h"
 
 RFManager::RFManager(PinName txPinName, PinName rxPinName):
-        serial(txPinName, rxPinName), buf(64) {
+        serial(txPinName, rxPinName), buf(256) {
 
     messageAvailable = false;
     receiveCounter = 0;
